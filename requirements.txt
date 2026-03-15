@@ -1,0 +1,18 @@
+# Web Framework
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# Database
+pymongo==4.5.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Timezone
+pytz==2023.3
+
+# Utilities
+python-dotenv==1.0.0
+
+# For better performance in production
+gunicorn==21.2.0  # Optional - for production deployment
