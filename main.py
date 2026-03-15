@@ -9,8 +9,9 @@ Version: 1.0
 """
 
 from flask import Flask, request, jsonify
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient
 from datetime import datetime
+from pytz import timezone  # <-- ADDED THIS
 import logging
 import requests
 import json
@@ -25,7 +26,7 @@ OWNER_ID = 7459756974
 OWNER_USERNAME = "@VIP_X_OFFICIAL"
 
 # India Timezone
-IST = timezone('Asia/Kolkata')
+IST = timezone('Asia/Kolkata')  # <-- NOW THIS WILL WORK
 
 # Setup logging
 logging.basicConfig(
@@ -58,14 +59,12 @@ except Exception as e:
 # ==================== HELPER FUNCTIONS ====================
 def get_ist():
     """Get current IST time"""
-    from pytz import timezone
-    IST = timezone('Asia/Kolkata')
     return datetime.now(IST)
 
 def format_ist(dt):
     """Format IST datetime"""
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone('UTC')).astimezone(timezone('Asia/Kolkata'))
+        dt = dt.replace(tzinfo=timezone('UTC')).astimezone(IST)
     return dt.strftime("%d-%m-%Y %I:%M:%S %p")
 
 def send_telegram_message(chat_id, text, parse_mode='HTML'):
@@ -82,30 +81,6 @@ def send_telegram_message(chat_id, text, parse_mode='HTML'):
     except Exception as e:
         logger.error(f"Error sending Telegram message: {e}")
         return None
-
-async def add_points(user_id, points, reason):
-    """Add points to user (sync version for webhook)"""
-    user = users_col.find_one({'user_id': user_id})
-    if not user:
-        return False
-    
-    new_balance = user['points'] + points
-    users_col.update_one(
-        {'user_id': user_id},
-        {'$set': {'points': new_balance}}
-    )
-    
-    # Log transaction
-    transactions_col.insert_one({
-        'user_id': user_id,
-        'type': 'credit',
-        'amount': points,
-        'reason': reason,
-        'balance': new_balance,
-        'timestamp': get_ist()
-    })
-    
-    return new_balance
 
 # ==================== WEBHOOK ENDPOINT ====================
 @app.route('/webhook', methods=['POST'])
